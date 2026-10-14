@@ -1,4 +1,3 @@
-#这是一个仿BiliBili的项目，实现顺序如下：
 项目骨架和健康检查
 学会 Go 项目入口、Gin 初始化、路由注册和依赖装配。
 
@@ -28,68 +27,3 @@ Redis 优化
 
 测试与容器化
 添加 Service 测试、Repository 集成测试、Docker Compose 和 README。
-
-
-
-mini-bilibili/
-├── cmd/
-│   └── server/
-│       └── main.go
-│
-├── internal/
-│   ├── config/
-│   │   └── config.go
-│   │
-│   ├── database/
-│   │   └── mysql.go
-│   │
-│   ├── middleware/
-│   │   ├── auth.go
-│   │   └── recovery.go
-│   │
-│   ├── user/
-│   │   ├── model.go
-│   │   ├── dto.go
-│   │   ├── repository.go
-│   │   ├── service.go
-│   │   └── handler.go
-│   │
-│   ├── video/
-│   │   ├── model.go
-│   │   ├── dto.go
-│   │   ├── repository.go
-│   │   ├── service.go
-│   │   └── handler.go
-│   │
-│   ├── feed/
-│   │   ├── dto.go
-│   │   ├── repository.go
-│   │   ├── service.go
-│   │   └── handler.go
-│   │
-│   ├── like/
-│   │   ├── model.go
-│   │   ├── repository.go
-│   │   ├── service.go
-│   │   └── handler.go
-│   │
-│   └── comment/
-│       ├── model.go
-│       ├── repository.go
-│       ├── service.go
-│       └── handler.go
-│
-├── migrations/
-│   ├── 001_create_users.sql
-│   ├── 002_create_videos.sql
-│   ├── 003_create_likes.sql
-│   └── 004_create_comments.sql
-│
-├── storage/
-│   ├── videos/
-│   └── covers/
-│
-├── docker-compose.yml
-├── .env.example
-├── go.mod
-└── README.md
