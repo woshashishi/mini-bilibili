@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mini-bilibili-mysql
+    restart: unless-stopped
+
+    environment:
+      # TODO 1：设置 root 密码
+      MYSQL_ROOT_PASSWORD: 123456
+
+      # TODO 2：设置启动时自动创建的数据库
+      MYSQL_DATABASE: mini_bilibili
+
+      TZ: Asia/Shanghai
+
+    ports:
+      # 宿主机使用 3309，容器内 MySQL 使用 3306
+      - "3309:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
