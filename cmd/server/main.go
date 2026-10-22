@@ -27,9 +27,20 @@ func main() {
 	// 传入的是 User 模型的指针。
 
 	// TODO 4：创建 Router
-	r := server.NewRouter()
+	// TODO：创建 Repository
+	userRepository := user.NewRepository(db)
+
+	// TODO：创建 Service
+	userService := user.NewService(userRepository)
+
+	// TODO：创建 Handler
+	userHandler := user.NewHandler(userService)
+
+	// TODO：把 Handler 传给 NewRouter
+	r := server.NewRouter(userHandler)
 	// TODO 5：监听 8000 端口
 	if err := r.Run(":8000"); err != nil {
 		log.Fatal("服务启动失败: ", err)
 	}
+
 }
