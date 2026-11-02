@@ -3,17 +3,20 @@ package user
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"mini-bilibili/internal/auth"
 	"net/http"
 )
 
 type Handler struct {
-	service *Service
+	service      *Service
+	tokenManager *auth.TokenManager
 }
 
-func NewHandler(service *Service) *Handler {
+func NewHandler(service *Service, tokenManager *auth.TokenManager) *Handler {
 	// TODO：创建并返回 Handler
 	return &Handler{
-		service: service,
+		service:      service,
+		tokenManager: tokenManager,
 	}
 }
 
@@ -25,6 +28,14 @@ type RegisterRequest struct {
 type RegisterResponse struct {
 	ID       uint64 `json:"id"`
 	Username string `json:"username"`
+}
+type LoginRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+type LoginResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
 }
 
 func (h *Handler) Register(c *gin.Context) {
@@ -92,4 +103,77 @@ func (h *Handler) Register(c *gin.Context) {
 		"message": "注册成功",
 		"data":    rep,
 	})
+}
+func (h *Handler) Login(c *gin.Context) {
+	var req LoginRequest
+
+	// TODO 1：ShouldBindJSON 解析请求
+	// 失败：HTTP 400
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    40001,
+			"message": "请求参数错误",
+		})
+		return
+	}
+
+	// code：40001
+	// message:"请求参数错误"
+	// 返回响应后立即 return
+
+	// TODO 2：调用 h.service.Login
+	// 传入请求的 Context、用户名和密码
+	u, err := h.service.Login(c.Request.Context(), req.Username, req.Password)
+	// TODO 3：处理登录错误
+	if err != nil {
+		if errors.Is(err, ErrInvalidCredentials) {
+			c.JSON(401, gin.H{
+				"code":    40101,
+				"message": "用户名或密码错误",
+			})
+			return
+		}
+		c.JSON(500, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+
+	// ErrInvalidCredentials：
+	//   HTTP 401，code 40101
+	//   message："用户名或密码错误"
+	//
+	// 其他错误：
+	//   HTTP 500，code 50001
+	//   message："服务器内部错误"
+	//
+	// 每个错误响应后立即 return
+
+	// TODO 4：使用登录成功的用户 ID 调用 Generate
+	// 签发失败：返回 HTTP 500，然后 return
+
+	st, err := h.tokenManager.Generate(uint64(u.ID))
+	// TODO 5：返回 HTTP 200
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+	lp := &LoginResponse{
+		AccessToken: st,
+		TokenType:   "Bearer",
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "登录成功",
+		"data":    lp,
+	})
+	// code：0
+	// message："登录成功"
+	// data：LoginResponse
+	//   AccessToken：签发的 Token
+	//   TokenType："Bearer"
 }

@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	ErrUsernameExists  = errors.New("username already exists")
-	ErrInvalidUsername = errors.New("invalid username")
-	ErrInvalidPassword = errors.New("invalid password")
+	ErrUsernameExists     = errors.New("username already exists")
+	ErrInvalidUsername    = errors.New("invalid username")
+	ErrInvalidPassword    = errors.New("invalid password")
+	ErrInvalidCredentials = errors.New("invalid username or password")
 )
 
 type Service struct {
@@ -103,4 +104,40 @@ func (s *Service) Register(
 	}
 	// TODO 8：返回创建成功的用户
 	return u, nil
+}
+
+// 登录流程
+func (s *Service) Login(
+	ctx context.Context,
+	username string,
+	password string,
+) (*User, error) {
+	// TODO 1：用 strings.TrimSpace 处理用户名
+	username = strings.TrimSpace(username)
+
+	// TODO 2：用户名或密码为空时
+	// 返回 nil, ErrInvalidCredentials
+	if username == "" || password == "" {
+		return nil, ErrInvalidCredentials
+	}
+	// TODO 3：调用 s.repo.FindByUsername
+	// 使用 errors.Is 判断：
+	// - gorm.ErrRecordNotFound：返回 ErrInvalidCredentials
+	// - 其他错误：原样返回
+	// - 没有错误：继续校验密码
+	user, err := s.repo.FindByUsername(ctx, username)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrInvalidCredentials
+	} else if err != nil {
+		return nil, err
+	}
+	// TODO 4：比较数据库哈希和输入密码
+	// 使用 bcrypt.CompareHashAndPassword
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		return nil, ErrInvalidCredentials
+	}
+	// 比较失败时返回 ErrInvalidCredentials
+
+	// TODO 5：返回查询到的用户和 nil
+	return user, nil
 }
