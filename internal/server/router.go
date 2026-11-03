@@ -24,5 +24,6 @@ func NewRouter(userHandler *user.Handler) *gin.Engine {
 	api := router.Group("api/v1")
 	auth := api.Group("auth")
 	auth.POST("register", userHandler.Register)
+	auth.POST("login", userHandler.Login)
 	return router
 }

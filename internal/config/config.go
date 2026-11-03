@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 type DatabaseConfig struct {
@@ -14,6 +15,11 @@ type DatabaseConfig struct {
 }
 type Config struct {
 	Database DatabaseConfig
+	JWT      JWTConfig
+}
+type JWTConfig struct {
+	Secret string
+	TTL    time.Duration
 }
 
 func Load() Config {
@@ -24,6 +30,14 @@ func Load() Config {
 			User:     getEnv("MYSQL_USER", "root"),
 			Password: getEnv("MYSQL_PASSWORD", "123456"), // 和 docker-compose 中一致
 			Name:     getEnv("MYSQL_DATABASE", "mini_bilibili"),
+		},
+		JWT: JWTConfig{
+			// TODO：通过 os.Getenv 读取 JWT_SECRET
+			// 不提供默认密钥；缺少密钥时，由 NewTokenManager 拒绝启动
+			Secret: getEnv("JWT_SECRET", ""),
+
+			// TODO：有效期设为两小时
+			TTL: 2 * time.Hour,
 		},
 	}
 

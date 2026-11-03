@@ -2,10 +2,13 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+var ErrInvalidToken = errors.New("invalid token")
 
 type Claims struct {
 	UserID uint64 `json:"user_id"`
@@ -68,4 +71,38 @@ func (m *TokenManager) Generate(userID uint64) (string, error) {
 	return st, nil
 	// 返回签名后的字符串和错误
 
+}
+func (m *TokenManager) Parse(tokenString string) (*Claims, error) {
+	// TODO 1：创建 Claims 指针，用来接收解析结果
+	cl := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, cl, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return m.secret, nil
+	}, jwt.WithValidMethods([]string{"HS256"}),
+		jwt.WithIssuer("mini-bilibili"),
+		jwt.WithExpirationRequired())
+	// TODO 2：调用 jwt.ParseWithClaims
+	// 参数依次为：
+	// - tokenString
+	// - Claims 指针
+	// - 提供验证密钥的回调函数
+	// - 校验选项
+	// TODO 3：解析出错，返回 nil, ErrInvalidToken
+	if err != nil {
+		return nil, ErrInvalidToken
+	}
+	// TODO 4：检查 token.Valid
+	// 无效时返回 nil, ErrInvalidToken
+	if !token.Valid {
+		return nil, ErrInvalidToken
+	}
+	// TODO 5：检查 Claims.UserID 是否大于零
+	// 不符合时返回 nil, ErrInvalidToken
+	if cl.UserID <= 0 {
+		return nil, ErrInvalidToken
+	}
+	// TODO 6：返回已经验证的 Claims
+	return cl, nil
 }
