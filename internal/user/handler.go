@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"mini-bilibili/internal/auth"
+	"mini-bilibili/internal/middleware"
 	"net/http"
 )
 
@@ -176,4 +177,45 @@ func (h *Handler) Login(c *gin.Context) {
 	// data：LoginResponse
 	//   AccessToken：签发的 Token
 	//   TokenType："Bearer"
+}
+func (h *Handler) Me(c *gin.Context) {
+	// TODO 1：使用 c.Get(middleware.UserIDKey)
+	// 接收 value 和 exists 两个返回值
+	//
+	val, exits := c.Get(middleware.UserIDKey)
+	// 不存在：返回 HTTP 500、code 50001，然后 return
+	// 这里表示路由组装或中间件存在问题
+	if !exits {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+	// TODO 2：将 value 安全断言为 uint64
+	// 类型不正确或 ID 为零：
+	// 返回 HTTP 500、code 50001，然后 return
+	userid, ok := val.(uint64)
+	if !ok || userid == 0 {
+		c.JSON(500, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"code":    0,
+		"message": "获取成功",
+		"data": gin.H{
+			"id": userid,
+		},
+	})
+	// TODO 3：返回 HTTP 200
+	// {
+	//   "code": 0,
+	//   "message": "获取成功",
+	//   "data": {
+	//     "id": 用户ID
+	//   }
+	// }
 }

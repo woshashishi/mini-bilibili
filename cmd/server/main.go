@@ -43,7 +43,7 @@ func main() {
 	userHandler := user.NewHandler(userService, tokenManger)
 
 	// TODO：把 Handler 传给 NewRouter
-	r := server.NewRouter(userHandler)
+	r := server.NewRouter(userHandler, tokenManger)
 	// TODO 5：监听 8000 端口
 	if err := r.Run(":8000"); err != nil {
 		log.Fatal("服务启动失败: ", err)
