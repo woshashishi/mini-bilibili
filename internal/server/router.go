@@ -4,11 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"mini-bilibili/internal/auth"
 	"mini-bilibili/internal/middleware"
+	"mini-bilibili/internal/video"
 
 	"mini-bilibili/internal/user"
 )
 
-func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager) *gin.Engine {
+func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, videoHandler *video.Handler) *gin.Engine {
 	router := gin.New()
 
 	router.Use(gin.Logger())
@@ -32,6 +33,9 @@ func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager) *gin.
 	// middleware.RequireAuth(tokenManager)
 	// userHandler.Me
 	api.GET("/me", middleware.RequireAuth(tokenManager), userHandler.Me)
-
+	// TODO：注册 POST /videos
+	// 第一个处理函数：middleware.RequireAuth(tokenManager)
+	// 第二个处理函数：videoHandler.Publish
+	api.POST("/videos", middleware.RequireAuth(tokenManager), videoHandler.Publish)
 	return router
 }

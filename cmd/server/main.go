@@ -7,6 +7,7 @@ import (
 	"mini-bilibili/internal/database"
 	"mini-bilibili/internal/server"
 	"mini-bilibili/internal/user"
+	"mini-bilibili/internal/video"
 )
 
 func main() {
@@ -22,7 +23,7 @@ func main() {
 	}
 	// TODO 3：
 	// 使用 GORM AutoMigrate 创建 users 表。
-	if err := db.AutoMigrate(&user.User{}); err != nil {
+	if err := db.AutoMigrate(&user.User{}, &video.Video{}); err != nil {
 		log.Fatal("自动迁移失败", err)
 	}
 	// 传入的是 User 模型的指针。
@@ -41,9 +42,19 @@ func main() {
 	}
 	// TODO：创建 Handler
 	userHandler := user.NewHandler(userService, tokenManger)
+	videoRepository := video.NewRepository(
+		db,
+	)
 
+	videoService := video.NewService(
+		videoRepository,
+	)
+
+	videoHandler := video.NewHandler(
+		videoService,
+	)
 	// TODO：把 Handler 传给 NewRouter
-	r := server.NewRouter(userHandler, tokenManger)
+	r := server.NewRouter(userHandler, tokenManger, videoHandler)
 	// TODO 5：监听 8000 端口
 	if err := r.Run(":8000"); err != nil {
 		log.Fatal("服务启动失败: ", err)
