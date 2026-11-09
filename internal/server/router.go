@@ -37,5 +37,10 @@ func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, video
 	// 第一个处理函数：middleware.RequireAuth(tokenManager)
 	// 第二个处理函数：videoHandler.Publish
 	api.POST("/videos", middleware.RequireAuth(tokenManager), videoHandler.Publish)
+
+	// TODO：注册 GET /videos/:id
+	// 直接绑定 videoHandler.GetByID
+	// 第一版视频详情允许公开查看，不挂鉴权中间件
+	api.GET("/videos/:id", videoHandler.GetByID)
 	return router
 }

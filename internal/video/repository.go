@@ -30,3 +30,23 @@ func (r *Repository) Create(
 	// 3. 返回数据库操作的 Error
 	return nil
 }
+func (r *Repository) FindByID(
+	ctx context.Context,
+	id uint64,
+) (*Video, error) {
+	// TODO 1：声明一个 Video 变量
+	video := &Video{
+		ID: id,
+	}
+	// TODO 2：使用 r.db.WithContext(ctx)
+	// 按 id 查询第一条记录
+	// 使用参数占位符，条件为 "id = ?"
+	err := r.db.WithContext(ctx).Where("id=?", id).First(video).Error
+	// TODO 3：查询失败时，返回 nil 和数据库错误
+	// 包括 gorm.ErrRecordNotFound，暂时不要转换它
+	if err != nil {
+		return nil, err
+	}
+	// TODO 4：查询成功时，返回 Video 指针和 nil
+	return video, nil
+}

@@ -3,6 +3,7 @@ package video
 import (
 	"context"
 	"errors"
+	"gorm.io/gorm"
 	"net/url"
 	"strings"
 	"unicode/utf8"
@@ -13,6 +14,8 @@ var (
 	ErrInvalidTitle       = errors.New("invalid title")
 	ErrInvalidDescription = errors.New("invalid description")
 	ErrInvalidVideoURL    = errors.New("invalid video url")
+	ErrInvalidVideoID     = errors.New("invalid video id")
+	ErrVideoNotFound      = errors.New("video not found")
 )
 
 type Service struct {
@@ -85,5 +88,30 @@ func (s *Service) Publish(
 		return nil, err
 	}
 	// TODO 8：返回创建成功的 Video 和 nil
+	return video, nil
+}
+func (s *Service) GetByID(
+	ctx context.Context,
+	id uint64,
+) (*Video, error) {
+	// TODO 1：ID 为零时
+	// 返回 nil, ErrInvalidVideoID
+	if id == 0 {
+		return nil, ErrInvalidVideoID
+	}
+	// TODO 2：调用 s.repo.FindByID
+	video, err := s.repo.FindByID(ctx, id)
+	// TODO 3：使用 errors.Is 判断 gorm.ErrRecordNotFound
+	// 转换为 ErrVideoNotFound
+
+	// TODO 4：其他数据库错误原样返回
+	if err != nil {
+		ok := errors.Is(err, gorm.ErrRecordNotFound)
+		if ok {
+			return nil, ErrVideoNotFound
+		}
+		return nil, err
+	}
+	// TODO 5：成功返回视频和 nil
 	return video, nil
 }

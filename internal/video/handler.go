@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"mini-bilibili/internal/middleware"
+	"strconv"
+	"time"
 )
 
 type Handler struct {
@@ -25,6 +27,14 @@ type PublishRequest struct {
 
 type PublishResponse struct {
 	ID uint64 `json:"id"`
+}
+type DetailResponse struct {
+	ID          uint64    `json:"id"`
+	AuthorID    uint64    `json:"author_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	VideoURL    string    `json:"video_url"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func (h *Handler) Publish(c *gin.Context) {
@@ -127,5 +137,78 @@ func (h *Handler) Publish(c *gin.Context) {
 	// code：0
 	// message："发布成功"
 	// data：PublishResponse，ID 为创建成功的视频 ID
+
+}
+
+func (h *Handler) GetByID(c *gin.Context) {
+	// TODO 1：通过 c.Param("id") 读取路径参数
+	str := c.Param("id")
+	// TODO 2：用 strconv.ParseUint 转成 uint64
+	// 参数：路径字符串、10、64
+	// 转换失败：
+	// HTTP 400、code 40004、message "视频ID格式错误"
+	// 然后 return
+	num, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"code":    40004,
+			"message": "视频ID格式错误",
+		})
+		return
+	}
+	// TODO 3：调用 h.service.GetByID
+	// 传入 c.Request.Context() 和转换后的 ID
+	video, err := h.service.GetByID(c.Request.Context(), num)
+	// TODO 4：使用 errors.Is 处理错误
+	//
+	// ErrInvalidVideoID：
+	// HTTP 400、code 40004、message "视频ID必须大于零"
+	//
+	// ErrVideoNotFound：
+	// HTTP 404、code 40401、message "视频不存在"
+	//
+	// 其他错误：
+	// HTTP 500、code 50001、message "服务器内部错误"
+	//
+	// 每个错误响应后 return
+	if err != nil {
+		if ok := errors.Is(err, ErrInvalidVideoID); ok {
+			c.JSON(400, gin.H{
+				"code":    40004,
+				"message": "视频ID必须大于零",
+			})
+			return
+		}
+		if ok := errors.Is(err, ErrVideoNotFound); ok {
+			c.JSON(404, gin.H{
+				"code":    40401,
+				"message": "视频不存在",
+			})
+			return
+		}
+
+		c.JSON(500, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+	// TODO 5：将 Video 中的字段填入 DetailResponse
+	// 返回 HTTP 200
+	// code：0
+	// message："获取成功"
+	// data：详情响应对象
+	c.JSON(200, gin.H{
+		"code":    0,
+		"message": "获取成功",
+		"data": DetailResponse{
+			ID:          video.ID,
+			AuthorID:    video.AuthorID,
+			Title:       video.Title,
+			VideoURL:    video.VideoURL,
+			CreatedAt:   video.CreatedAt,
+			Description: video.Description,
+		},
+	})
 
 }
