@@ -50,3 +50,30 @@ func (r *Repository) FindByID(
 	// TODO 4：查询成功时，返回 Video 指针和 nil
 	return video, nil
 }
+func (r *Repository) ListBeforeID(
+	ctx context.Context,
+	cursor uint64,
+	limit int,
+) ([]Video, error) {
+	// TODO 1：创建空的 Video 切片
+	// 建议使用 make([]Video, 0)
+	var video = make([]Video, 0)
+	// TODO 2：从 r.db.WithContext(ctx) 创建查询对象
+	query := r.db.WithContext(ctx)
+	// TODO 3：cursor > 0 时添加 "id < ?" 条件
+	// 注意保存 Where 返回的查询对象
+	if cursor > 0 {
+		query = query.Where("id <?", cursor)
+	}
+	// TODO 4：
+	// 按 "id DESC" 排序
+	// 使用 Limit(limit) 限制数量
+	// 使用 Find 将结果填入切片
+	err := query.Order("id DESC").Limit(limit).Find(&video).Error
+	// TODO 5：查询失败时返回 nil 和原始错误
+	if err != nil {
+		return nil, err
+	}
+	// TODO 6：查询成功时返回切片和 nil
+	return video, nil
+}

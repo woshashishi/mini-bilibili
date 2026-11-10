@@ -37,6 +37,12 @@ type DetailResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+type FeedResponse struct {
+	Items      []DetailResponse `json:"items"`
+	HasMore    bool             `json:"has_more"`
+	NextCursor uint64           `json:"next_cursor"`
+}
+
 func (h *Handler) Publish(c *gin.Context) {
 	// TODO 1：读取 middleware.UserIDKey
 	val, exits := c.Get(middleware.UserIDKey)
@@ -211,4 +217,94 @@ func (h *Handler) GetByID(c *gin.Context) {
 		},
 	})
 
+}
+func (h *Handler) Feed(c *gin.Context) {
+	// TODO 1：读取 cursor，默认字符串 "0"
+	// 用 strconv.ParseUint(rawCursor, 10, 64) 转换
+	// 失败：HTTP 400、code 40005
+	// message："游标格式错误"
+	// 然后 return
+	cursorStr := c.DefaultQuery("cursor", "0")
+	var cursor uint64 = 0
+	var err error
+	cursor, err = strconv.ParseUint(cursorStr, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"code":    40005,
+			"message": "游标格式错误",
+		})
+		return
+	}
+	// TODO 2：读取 limit，默认字符串 "10"
+	// 用 strconv.Atoi 转换为 int
+	// 失败：HTTP 400、code 40005
+	// message："分页数量格式错误"
+	// 然后 return
+	limitStr := c.DefaultQuery("limit", "10")
+	var limit int = 10
+	limit, err = strconv.Atoi(limitStr)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"code":    40005,
+			"message": "分页数量格式错误",
+		})
+		return
+	}
+
+	// TODO 3：调用 h.service.Feed
+	// 传入请求 Context、cursor、limit
+	feedResult, err := h.service.Feed(c.Request.Context(), cursor, limit)
+	// TODO 4：处理错误
+	// ErrInvalidLimit：
+	// HTTP 400、code 40005
+	// message："分页数量应为0至50，0表示默认10条"
+	//
+	// 其他错误：
+	// HTTP 500、code 50001
+	// message："服务器内部错误"
+	//
+	// 每个错误响应后 return
+	if err != nil {
+		if errors.Is(err, ErrInvalidLimit) {
+			c.JSON(400, gin.H{
+				"code":    40005,
+				"message": "分页数量应为0至50，0表示默认10条",
+			})
+			return
+		} else {
+			c.JSON(500, gin.H{
+				"code":    50001,
+				"message": "服务器内部错误",
+			})
+			return
+		}
+	}
+	// TODO 5：创建非 nil 的空 []DetailResponse
+	// 遍历 result.Items，将每条视频转换为 DetailResponse
+	// 包含 ID、AuthorID、Title、Description、VideoURL、CreatedAt
+	detailResponse := make([]DetailResponse, 0, len(feedResult.Items))
+	for i := 0; i < len(feedResult.Items); i++ {
+		item := DetailResponse{
+			ID:          feedResult.Items[i].ID,
+			AuthorID:    feedResult.Items[i].AuthorID,
+			Title:       feedResult.Items[i].Title,
+			Description: feedResult.Items[i].Description,
+			VideoURL:    feedResult.Items[i].VideoURL,
+			CreatedAt:   feedResult.Items[i].CreatedAt,
+		}
+		detailResponse = append(detailResponse, item)
+	}
+	// TODO 6：返回 HTTP 200
+	// code：0
+	// message："获取成功"
+	// data：FeedResponse
+	c.JSON(200, gin.H{
+		"code":    0,
+		"message": "获取成功",
+		"data": &FeedResponse{
+			Items:      detailResponse,
+			HasMore:    feedResult.HasMore,
+			NextCursor: feedResult.NextCursor,
+		},
+	})
 }

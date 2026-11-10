@@ -42,5 +42,8 @@ func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, video
 	// 直接绑定 videoHandler.GetByID
 	// 第一版视频详情允许公开查看，不挂鉴权中间件
 	api.GET("/videos/:id", videoHandler.GetByID)
+	// TODO：注册 GET /feed，绑定 videoHandler.Feed
+	// 第一版 Feed 允许未登录访问，不挂鉴权中间件
+	api.GET("/feed", videoHandler.Feed)
 	return router
 }

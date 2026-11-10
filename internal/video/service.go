@@ -16,10 +16,17 @@ var (
 	ErrInvalidVideoURL    = errors.New("invalid video url")
 	ErrInvalidVideoID     = errors.New("invalid video id")
 	ErrVideoNotFound      = errors.New("video not found")
+	ErrInvalidLimit       = errors.New("invalid limit")
 )
 
 type Service struct {
 	repo *Repository
+}
+
+type FeedResult struct {
+	Items      []Video
+	HasMore    bool
+	NextCursor uint64
 }
 
 func NewService(repo *Repository) *Service {
@@ -114,4 +121,51 @@ func (s *Service) GetByID(
 	}
 	// TODO 5：成功返回视频和 nil
 	return video, nil
+}
+
+func (s *Service) Feed(
+	ctx context.Context,
+	cursor uint64,
+	limit int,
+) (*FeedResult, error) {
+	feedResult := &FeedResult{}
+	// TODO 1：limit 为零时，设置默认值 10
+	if limit == 0 {
+		limit = 10
+	}
+	// TODO 2：limit 小于 1 或大于 50 时
+	// 返回 nil, ErrInvalidLimit
+	if limit < 1 || limit > 50 {
+		return nil, ErrInvalidLimit
+	}
+	// TODO 3：调用 ListBeforeID
+	// 注意：查询数量是 limit + 1
+	// 数据库失败时返回 nil 和原始错误
+	video, err := s.repo.ListBeforeID(ctx, cursor, limit+1)
+	if err != nil {
+		return nil, err
+	}
+	// TODO 4：判断查询结果是否超过 limit
+	// 超过时：
+	// - HasMore 为 true
+	// - 将列表截取为前 limit 条
+	//
+	// 不超过时：
+	// - HasMore 为 false
+	// - 保留全部结果
+	if len(video) > limit {
+		feedResult.HasMore = true
+		video = video[:limit]
+	}
+	// TODO 5：计算下一游标
+	// 默认是 0
+	// 只有 HasMore 为 true 时，
+	// 才取截取后列表最后一条视频的 ID
+	feedResult.NextCursor = 0
+	if feedResult.HasMore == true {
+		feedResult.NextCursor = video[len(video)-1].ID
+	}
+	// TODO 6：构造并返回 FeedResult
+	feedResult.Items = video
+	return feedResult, nil
 }
