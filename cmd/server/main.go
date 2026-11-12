@@ -5,6 +5,7 @@ import (
 	"mini-bilibili/internal/auth"
 	"mini-bilibili/internal/config"
 	"mini-bilibili/internal/database"
+	"mini-bilibili/internal/like"
 	"mini-bilibili/internal/server"
 	"mini-bilibili/internal/user"
 	"mini-bilibili/internal/video"
@@ -23,7 +24,7 @@ func main() {
 	}
 	// TODO 3：
 	// 使用 GORM AutoMigrate 创建 users 表。
-	if err := db.AutoMigrate(&user.User{}, &video.Video{}); err != nil {
+	if err := db.AutoMigrate(&user.User{}, &video.Video{}, &like.Like{}); err != nil {
 		log.Fatal("自动迁移失败", err)
 	}
 	// 传入的是 User 模型的指针。
@@ -53,8 +54,20 @@ func main() {
 	videoHandler := video.NewHandler(
 		videoService,
 	)
+	likeRepository := like.NewRepository(
+		db,
+	)
+
+	likeService := like.NewService(
+		likeRepository,
+		videoRepository,
+	)
+
+	likeHandler := like.NewHandler(
+		likeService,
+	)
 	// TODO：把 Handler 传给 NewRouter
-	r := server.NewRouter(userHandler, tokenManger, videoHandler)
+	r := server.NewRouter(userHandler, tokenManger, videoHandler, likeHandler)
 	// TODO 5：监听 8000 端口
 	if err := r.Run(":8000"); err != nil {
 		log.Fatal("服务启动失败: ", err)

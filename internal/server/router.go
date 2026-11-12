@@ -3,13 +3,14 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"mini-bilibili/internal/auth"
+	"mini-bilibili/internal/like"
 	"mini-bilibili/internal/middleware"
 	"mini-bilibili/internal/video"
 
 	"mini-bilibili/internal/user"
 )
 
-func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, videoHandler *video.Handler) *gin.Engine {
+func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, videoHandler *video.Handler, likeHandler *like.Handler) *gin.Engine {
 	router := gin.New()
 
 	router.Use(gin.Logger())
@@ -45,5 +46,9 @@ func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, video
 	// TODO：注册 GET /feed，绑定 videoHandler.Feed
 	// 第一版 Feed 允许未登录访问，不挂鉴权中间件
 	api.GET("/feed", videoHandler.Feed)
+	// TODO：使用 api.PUT 注册 "/videos/:id/like"
+	// 先执行 middleware.RequireAuth(tokenManager)
+	// 再执行 likeHandler.Add
+	api.PUT("/videos/:id/like", middleware.RequireAuth(tokenManager), likeHandler.Add)
 	return router
 }
