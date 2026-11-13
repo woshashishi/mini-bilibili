@@ -50,3 +50,23 @@ func (r *Repository) Add(
 
 	return err
 }
+func (r *Repository) Remove(
+	ctx context.Context,
+	userID uint64,
+	videoID uint64,
+) error {
+	// TODO 1：使用 r.db.WithContext(ctx)
+
+	// TODO 2：使用 Where 添加条件
+	// "user_id = ? AND video_id = ?"
+	// 参数依次为 userID、videoID
+	err := r.db.WithContext(ctx).Where("user_id = ? AND video_id = ?", userID, videoID).Delete(&Like{}).Error
+	// TODO 3：调用 Delete(&Like{})
+	// Like 模型用于确定操作 likes 表
+
+	// TODO 4：返回操作的 Error
+	if err != nil {
+		return err
+	}
+	return nil
+}

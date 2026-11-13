@@ -66,3 +66,25 @@ func (s *Service) Add(
 	}
 	return nil
 }
+func (s *Service) Remove(
+	ctx context.Context,
+	userID uint64,
+	videoID uint64,
+) error {
+	// TODO 1：userID 为零时，返回 ErrInvalidUserID
+	if userID == 0 {
+		return ErrInvalidUserID
+	}
+	// TODO 2：videoID 为零时，返回 ErrInvalidVideoID
+	if videoID == 0 {
+		return ErrInvalidVideoID
+	}
+	// TODO 3：调用 s.repo.Remove
+	// 传入 ctx、userID、videoID
+	// 返回它的执行结果
+	err := s.repo.Remove(ctx, userID, videoID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
