@@ -54,5 +54,12 @@ func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, video
 	// TODO：使用 DELETE 注册相同路径
 	// 先鉴权，再调用 likeHandler.Remove
 	api.DELETE("/videos/:id/like", middleware.RequireAuth(tokenManager), likeHandler.Remove)
+	// TODO：注册 GET /videos/:id/likes/count
+	// 绑定 likeHandler.Count，不挂鉴权中间件
+	api.GET("/videos/:id/likes/count", likeHandler.Count)
+	// TODO：注册 GET /videos/:id/like
+	// 先执行 middleware.RequireAuth(tokenManager)
+	// 再执行 likeHandler.Status
+	api.GET("/videos/:id/like", middleware.RequireAuth(tokenManager), likeHandler.Status)
 	return router
 }

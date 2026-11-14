@@ -10,6 +10,12 @@ import (
 type Handler struct {
 	service *Service
 }
+type CountResponse struct {
+	Count int64 `json:"count"`
+}
+type StatusResponse struct {
+	Liked bool `json:"liked"`
+}
 
 func NewHandler(service *Service) *Handler {
 	// TODO：保存 Service
@@ -172,4 +178,148 @@ func (h *Handler) Remove(c *gin.Context) {
 		"message": "取消点赞成功",
 	})
 	return
+}
+func (h *Handler) Count(c *gin.Context) {
+	// TODO 1：读取 c.Param("id")
+	// 用 strconv.ParseUint 转换
+	// 转换失败：
+	// HTTP 400、code 40004、message "视频ID格式错误"
+	// 然后 return
+	str := c.Param("id")
+	videoId, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"code":    40004,
+			"message": "视频ID格式错误",
+		})
+		return
+	}
+	// TODO 2：调用 h.service.CountByVideoID
+	// 传入 c.Request.Context()、视频 ID
+	// 接收 count 和 err
+	count, err := h.service.CountByVideoID(c.Request.Context(), videoId)
+	// TODO 3：用 errors.Is 处理错误
+	//
+	if err != nil {
+		if errors.Is(err, ErrInvalidVideoID) {
+			c.JSON(400, gin.H{
+				"code":    40004,
+				"message": "视频ID必须大于零",
+			})
+			return
+		}
+		if errors.Is(err, ErrVideoNotFound) {
+			c.JSON(404, gin.H{
+				"code":    40401,
+				"message": "视频不存在",
+			})
+			return
+		}
+		c.JSON(500, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+	// ErrInvalidVideoID：
+	// HTTP 400、code 40004、message "视频ID必须大于零"
+	//
+	// ErrVideoNotFound：
+	// HTTP 404、code 40401、message "视频不存在"
+	//
+	// 其他错误：
+	// HTTP 500、code 50001、message "服务器内部错误"
+	//
+	// 每个错误响应后 return
+
+	// TODO 4：返回 HTTP 200
+	// code：0
+	// message："获取成功"
+	// data：CountResponse，填入查询到的 count
+	c.JSON(200, gin.H{
+		"code":    0,
+		"message": "获取成功",
+		"data": &CountResponse{
+			count,
+		},
+	})
+	return
+}
+func (h *Handler) Status(c *gin.Context) {
+	val, exit := c.Get(middleware.UserIDKey)
+	if !exit {
+		c.JSON(500, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+	userId, ok := val.(uint64)
+	if !ok || userId == 0 {
+		c.JSON(500, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+	str := c.Param("id")
+	videoId, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"code":    40004,
+			"message": "视频ID格式错误",
+		})
+		return
+	}
+	liked, err := h.service.Exists(c.Request.Context(), userId, videoId)
+	// TODO 3：调用 h.service.Exists
+	// 传入 c.Request.Context()、用户 ID、视频 ID
+	// 接收 liked 和 err
+
+	// TODO 4：使用 errors.Is 处理错误
+	//
+	if err != nil {
+		if errors.Is(err, ErrInvalidVideoID) {
+			c.JSON(400, gin.H{
+				"code":    40004,
+				"message": "视频ID必须大于零",
+			})
+			return
+		}
+		if errors.Is(err, ErrVideoNotFound) {
+			c.JSON(404, gin.H{
+				"code":    40401,
+				"message": "视频不存在",
+			})
+			return
+		}
+		c.JSON(500, gin.H{
+			"code":    50001,
+			"message": "服务器内部错误",
+		})
+		return
+	}
+	// ErrInvalidVideoID：
+	// HTTP 400、code 40004、message "视频ID必须大于零"
+	//
+	// ErrVideoNotFound：
+	// HTTP 404、code 40401、message "视频不存在"
+	//
+	// 其他错误：
+	// HTTP 500、code 50001、message "服务器内部错误"
+	//
+	// 每个错误响应后 return
+
+	// TODO 5：返回 HTTP 200
+	// code：0
+	// message："获取成功"
+	// data：StatusResponse，Liked 填入查询结果
+	c.JSON(200, gin.H{
+		"code":    0,
+		"message": "获取成功",
+		"data": &StatusResponse{
+			Liked: liked,
+		},
+	})
+
 }
