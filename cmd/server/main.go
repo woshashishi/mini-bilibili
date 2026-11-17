@@ -7,6 +7,8 @@ import (
 	"mini-bilibili/internal/database"
 	"mini-bilibili/internal/like"
 	"mini-bilibili/internal/server"
+	"mini-bilibili/internal/storage"
+	"mini-bilibili/internal/upload"
 	"mini-bilibili/internal/user"
 	"mini-bilibili/internal/video"
 )
@@ -66,8 +68,26 @@ func main() {
 	likeHandler := like.NewHandler(
 		likeService,
 	)
+	localStorage, err := storage.NewLocalStorage(
+		/* TODO：存储目录，填写 "storage/videos" */
+		"storage/videos",
+	)
+	if err != nil {
+		// TODO：log.Fatal，结束启动
+		log.Fatal()
+	}
+
+	uploadService := upload.NewService(
+		/* TODO：传入 localStorage */
+		localStorage,
+	)
+
+	uploadHandler := upload.NewHandler(
+		/* TODO：传入 uploadService */
+		uploadService,
+	)
 	// TODO：把 Handler 传给 NewRouter
-	r := server.NewRouter(userHandler, tokenManger, videoHandler, likeHandler)
+	r := server.NewRouter(userHandler, tokenManger, videoHandler, likeHandler, uploadHandler)
 	// TODO 5：监听 8000 端口
 	if err := r.Run(":8000"); err != nil {
 		log.Fatal("服务启动失败: ", err)

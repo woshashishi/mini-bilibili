@@ -5,12 +5,13 @@ import (
 	"mini-bilibili/internal/auth"
 	"mini-bilibili/internal/like"
 	"mini-bilibili/internal/middleware"
+	"mini-bilibili/internal/upload"
 	"mini-bilibili/internal/video"
 
 	"mini-bilibili/internal/user"
 )
 
-func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, videoHandler *video.Handler, likeHandler *like.Handler) *gin.Engine {
+func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, videoHandler *video.Handler, likeHandler *like.Handler, uploadHandler *upload.Handler) *gin.Engine {
 	router := gin.New()
 
 	router.Use(gin.Logger())
@@ -61,5 +62,9 @@ func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, video
 	// 先执行 middleware.RequireAuth(tokenManager)
 	// 再执行 likeHandler.Status
 	api.GET("/videos/:id/like", middleware.RequireAuth(tokenManager), likeHandler.Status)
+	// TODO：使用 POST 注册 "/uploads/videos"
+	// 先执行 middleware.RequireAuth(tokenManager)
+	// 再执行 uploadHandler.UploadVideo
+	api.POST("/uploads/videos", middleware.RequireAuth(tokenManager), uploadHandler.UploadVideo)
 	return router
 }
