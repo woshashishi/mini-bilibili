@@ -1,6 +1,11 @@
 <template>
   <main class="feed">
     <h1>视频列表</h1>
+    <LoginForm
+        v-if="!token"
+        @logged-in="handleLogin"
+    />
+    <p v-else>已登录</p>
     <button :disabled="loading" @click="fetchVideos(true)">
       {{ loading ? '正在加载……' : loaded ? '刷新列表' : '加载视频' }}
     </button>
@@ -11,6 +16,16 @@
     <ul :aria-busy="loading">
       <li v-for="video in videos" :key="video.id">
         <h2>{{ video.title }}</h2>
+        <!-- 在标题下面加入播放器 -->
+        <video
+            :src="video.video_url"
+            controls
+            preload="metadata"
+            playsinline
+            class="video-player"
+        >
+          当前浏览器不支持视频播放。
+        </video>
         <p>{{ video.description || '暂无简介' }}</p>
         <small>视频 #{{ video.id }} · 作者 #{{ video.author_id }}</small>
       </li>
@@ -26,7 +41,14 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import LoginForm from './components/LoginForm.vue'
 
+const token = ref('')
+
+function handleLogin(accessToken) {
+  // TODO：将 accessToken 保存到 token.value
+  token.value=accessToken
+}
 const videos = ref([])
 const loading = ref(false)
 const loaded = ref(false)
@@ -76,6 +98,14 @@ async function fetchVideos(reset = true) {
   width: min(640px, 90vw);
   margin: 24px auto;
   text-align: left;
+}
+.video-player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #000;
+  border-radius: 8px;
 }
 ul { list-style: none; padding: 0; }
 li { padding: 16px 0; border-bottom: 1px solid #8885; }

@@ -66,5 +66,13 @@ func NewRouter(userHandler *user.Handler, tokenManager *auth.TokenManager, video
 	// 先执行 middleware.RequireAuth(tokenManager)
 	// 再执行 uploadHandler.UploadVideo
 	api.POST("/uploads/videos", middleware.RequireAuth(tokenManager), uploadHandler.UploadVideo)
+	router.StaticFS(
+		/* TODO：URL 前缀，填写 "/uploads/videos" */
+		"/uploads/videos",
+		gin.Dir("storage/videos",
+			/* TODO：磁盘目录，与 LocalStorage 使用的目录一致 */
+			false,
+		),
+	)
 	return router
 }
