@@ -11,6 +11,9 @@ import (
 	"mini-bilibili/internal/upload"
 	"mini-bilibili/internal/user"
 	"mini-bilibili/internal/video"
+	"os"
+	"path/filepath"
+	"runtime"
 )
 
 func main() {
@@ -77,9 +80,22 @@ func main() {
 		log.Fatal()
 	}
 
+	ffmpegPath := os.Getenv("FFMPEG_PATH")
+	if ffmpegPath == "" {
+		if runtime.GOOS == "windows" {
+			ffmpegPath = filepath.Join("tools", "ffmpeg.exe")
+		} else {
+			ffmpegPath = "ffmpeg"
+		}
+	}
+	transcoder, err := upload.NewVideoTranscoder(ffmpegPath)
+	if err != nil {
+		log.Fatal("初始化视频转码失败: ", err)
+	}
 	uploadService := upload.NewService(
 		/* TODO：传入 localStorage */
 		localStorage,
+		transcoder,
 	)
 
 	uploadHandler := upload.NewHandler(

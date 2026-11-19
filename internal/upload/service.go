@@ -1,23 +1,27 @@
 package upload
 
 import (
+	"context"
 	"io"
 
 	"mini-bilibili/internal/storage"
 )
 
 type Service struct {
-	store *storage.LocalStorage
+	store      *storage.LocalStorage
+	transcoder *VideoTranscoder
 }
 
-func NewService(store *storage.LocalStorage) *Service {
+func NewService(store *storage.LocalStorage, transcoder *VideoTranscoder) *Service {
 	// TODO：保存存储对象，返回 Service
 	return &Service{
-		store: store,
+		store:      store,
+		transcoder: transcoder,
 	}
 }
 
 func (s *Service) SaveVideo(
+	ctx context.Context,
 	filename string,
 	size int64,
 	src io.ReadSeeker,
@@ -32,7 +36,12 @@ func (s *Service) SaveVideo(
 
 	// TODO 2：调用 s.store.SaveMP4(src)
 	// 保存失败：返回空字符串和原始错误
-	str, err := s.store.SaveMP4(src)
+	normalized, cleanup, err := s.transcoder.Normalize(ctx, src)
+	if err != nil {
+		return "", err
+	}
+	defer cleanup()
+	str, err := s.store.SaveMP4(normalized)
 	// TODO 3：成功返回生成的文件名和 nil
 	if err != nil {
 		return "", err

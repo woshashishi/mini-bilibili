@@ -129,7 +129,7 @@ func (h *Handler) UploadVideo(c *gin.Context) {
 	// TODO 5：调用 h.service.SaveVideo
 	// 依次传入 header.Filename、header.Size、file
 	// 接收服务器生成的文件名和错误
-	str, err := h.service.SaveVideo(header.Filename, header.Size, file)
+	str, err := h.service.SaveVideo(c.Request.Context(), header.Filename, header.Size, file)
 	// TODO 6：处理 Service 错误
 	// ErrInvalidSize：
 	//   HTTP 413、code 41301、message "视频不能超过100MiB"
